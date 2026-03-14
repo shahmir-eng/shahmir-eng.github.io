@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cinematography Prompt Engineer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ── API Key Modal ──────────────────────────────────── -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <h2>OpenAI API Key</h2>
+    <p>
+      Your key is used only in this browser session and is never sent anywhere
+      except directly to OpenAI. Get a key at
+      <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>.
+    </p>
+    <label for="apiKeyInput">API Key</label>
+    <input type="password" id="apiKeyInput" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="apiModalCancel">Cancel</button>
+      <button class="btn btn-primary" id="apiModalSave">Save Key</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Header ─────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14v-4z"/>
+      <rect x="2" y="6" width="13" height="12" rx="2"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Cinematography Prompt Engineer</h1>
+    <div class="tagline">Analyze video visual language · Generate faithful image prompts</div>
+  </div>
+  <div class="api-key-badge">
+    <div class="indicator" id="apiIndicator"></div>
+    <button id="apiKeyBtn">Set API Key</button>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────── -->
+<main>
+
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="step-item active" data-step="1">
+      <div class="step-num">1</div>
+      <div class="step-label">Video</div>
+    </div>
+    <div class="step-item" data-step="2">
+      <div class="step-num">2</div>
+      <div class="step-label">References</div>
+    </div>
+    <div class="step-item" data-step="3">
+      <div class="step-num">3</div>
+      <div class="step-label">Prefix</div>
+    </div>
+    <div class="step-item" data-step="4">
+      <div class="step-num">4</div>
+      <div class="step-label">Script</div>
+    </div>
+    <div class="step-item" data-step="5">
+      <div class="step-num">5</div>
+      <div class="step-label">Generate</div>
+    </div>
+    <div class="step-item" data-step="6">
+      <div class="step-num">6</div>
+      <div class="step-label">Refine</div>
+    </div>
+  </div>
+
+  <!-- ── STEP 1 — Video Upload ─────────────────────── -->
+  <section class="step-section active" id="step1">
+    <div class="card">
+      <div class="card-title">
+        Upload Reference Video
+        <span class="badge">Step 1 of 6</span>
+      </div>
+      <div class="card-desc">
+        Upload the video whose visual language you want to match. The tool will extract frames and
+        analyse shot types, camera movement, lighting, and color treatment.
+      </div>
+
+      <div class="drop-zone" id="videoDropZone">
+        <input type="file" id="videoFileInput" accept="video/*" />
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="13" height="12" rx="2"/>
+            <path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14v-4z"/>
+          </svg>
+        </div>
+        <h3 id="videoDropLabel">Drop your video here</h3>
+        <p>MP4, MOV, WebM · up to 500 MB</p>
+      </div>
+
+      <div class="video-preview-wrapper" id="videoPreviewWrapper">
+        <video id="videoPreview" controls muted playsinline></video>
+        <div class="frame-grid" id="frameGrid"></div>
+      </div>
+
+      <div class="analysis-box" id="videoAnalysisBox">
+        <div class="analysis-label">Visual Language Analysis</div>
+        <div class="analysis-props" id="videoAnalysisContent"></div>
+      </div>
+
+      <div class="step-nav">
+        <div id="videoAnalyzeRow" style="display:none">
+          <button class="btn btn-primary" id="analyzeVideoBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+            Analyse Video
+          </button>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="step1Skip">Skip analysis →</button>
+        <button class="btn btn-primary" id="step1Next" disabled>Continue →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STEP 2 — Reference Images ─────────────────── -->
+  <section class="step-section" id="step2">
+    <div class="card">
+      <div class="card-title">
+        Upload Reference Images
+        <span class="badge">Step 2 of 6</span>
+      </div>
+      <div class="card-desc">
+        Upload 1–3 images that represent your desired visual style. These anchor the look of every
+        prompt — color palette, lighting quality, subject framing, and texture.
+      </div>
+
+      <div class="ref-images-grid">
+        <div class="ref-image-slot" id="refSlot0">
+          <input type="file" class="ref-file-input" data-slot="0" accept="image/*" />
+          <span class="slot-label">Image 1</span>
+          <button class="remove-btn" data-slot="0" title="Remove">×</button>
+        </div>
+        <div class="ref-image-slot" id="refSlot1">
+          <input type="file" class="ref-file-input" data-slot="1" accept="image/*" />
+          <span class="slot-label">Image 2</span>
+          <button class="remove-btn" data-slot="1" title="Remove">×</button>
+        </div>
+        <div class="ref-image-slot" id="refSlot2">
+          <input type="file" class="ref-file-input" data-slot="2" accept="image/*" />
+          <span class="slot-label">Image 3</span>
+          <button class="remove-btn" data-slot="2" title="Remove">×</button>
+        </div>
+      </div>
+
+      <div class="analysis-box" id="refAnalysisBox">
+        <div class="analysis-label">Reference Style Analysis</div>
+        <div class="analysis-props" id="refAnalysisContent"></div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="step2Back">← Back</button>
+        <div id="refAnalyzeRow" style="display:none; margin-left:auto; margin-right:12px">
+          <button class="btn btn-primary" id="analyzeRefBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+            Analyse References
+          </button>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="step2Skip">Skip →</button>
+        <button class="btn btn-primary" id="step2Next">Continue →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STEP 3 — Prompt Prefix ─────────────────────── -->
+  <section class="step-section" id="step3">
+    <div class="card">
+      <div class="card-title">
+        Set Your Prompt Prefix
+        <span class="badge">Step 3 of 6</span>
+      </div>
+      <div class="card-desc">
+        This opening line will be prepended verbatim to every generated image prompt. Examples:
+        <em>Realistic photograph,</em>&nbsp; <em>Shot on ARRI Alexa,</em>&nbsp;
+        <em>Clean product photography,</em>
+      </div>
+
+      <label for="prefixInput">Prompt prefix</label>
+      <input type="text" id="prefixInput"
+        placeholder='e.g. "Realistic photograph," or "Shot on ARRI Alexa,"'
+        value="" />
+
+      <div style="margin-top:12px">
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px">Quick picks:</p>
+        <div class="adjustment-chips" id="prefixChips">
+          <button class="chip" data-prefix="Realistic photograph,">Realistic photograph</button>
+          <button class="chip" data-prefix="Shot on ARRI Alexa,">Shot on ARRI Alexa</button>
+          <button class="chip" data-prefix="Clean product photography,">Product photography</button>
+          <button class="chip" data-prefix="Shot on RED camera,">Shot on RED camera</button>
+          <button class="chip" data-prefix="Editorial fashion photograph,">Editorial fashion</button>
+          <button class="chip" data-prefix="Documentary photograph,">Documentary</button>
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="step3Back">← Back</button>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="step3Next">Continue →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STEP 4 — Script Input ──────────────────────── -->
+  <section class="step-section" id="step4">
+    <div class="card">
+      <div class="card-title">
+        Paste Your Script
+        <span class="badge">Step 4 of 6</span>
+      </div>
+      <div class="card-desc">
+        Each line = one image prompt. Write one scene beat, action, or visual description per line.
+        Blank lines are ignored.
+      </div>
+
+      <label for="scriptInput">Script (one scene per line)</label>
+      <textarea id="scriptInput" placeholder="Line 1 — e.g. Person enters empty office, sits at desk
+Line 2 — Close-up of hands typing on keyboard
+Line 3 — Wide shot of rain on glass window
+Line 4 — Two people in heated conversation across a table"></textarea>
+
+      <div style="margin-top: 8px; display:flex; justify-content:space-between; align-items:center">
+        <span style="font-size:0.78rem; color:var(--text-faint)" id="lineCount">0 lines</span>
+        <button class="btn btn-ghost btn-sm" id="clearScriptBtn">Clear</button>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="step4Back">← Back</button>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="step4Next" disabled>Generate Prompts →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STEP 5 — Generated Prompts ────────────────── -->
+  <section class="step-section" id="step5">
+    <div class="card">
+      <div class="card-title">
+        Generated Image Prompts
+        <span class="badge">Step 5 of 6</span>
+      </div>
+      <div class="card-desc">
+        Each prompt follows the required structure: prefix · shot type · subject · background ·
+        lighting · color palette. Click any block to copy it.
+      </div>
+
+      <div id="generatingRow" class="loading-row" style="display:none">
+        <div class="spinner"></div>
+        Generating prompts — analysing script lines…
+      </div>
+
+      <div id="promptsOutput">
+        <div class="copy-all-bar" id="copyAllBar" style="display:none">
+          <span id="promptsCountLabel"></span>
+          <button class="btn btn-secondary btn-sm" id="copyAllBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+            Copy All
+          </button>
+        </div>
+        <div class="prompts-list" id="promptsList"></div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="step5Back">← Back</button>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="step5Next" disabled>Refine & Adjust →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STEP 6 — Refine ───────────────────────────── -->
+  <section class="step-section" id="step6">
+    <div class="card">
+      <div class="card-title">
+        Refine Prompts
+        <span class="badge">Step 6 of 6</span>
+      </div>
+      <div class="card-desc">
+        Adjust any aspect of the prompts — camera angles, color palette, descriptions, or generate
+        alternates for a specific line.
+      </div>
+
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px">Quick adjustments:</p>
+      <div class="adjustment-chips" id="adjustmentChips">
+        <button class="chip" data-adjust="Tighten all descriptions to be more concise">Tighten descriptions</button>
+        <button class="chip" data-adjust="Swap all camera angles to be more varied">Vary camera angles</button>
+        <button class="chip" data-adjust="Make color palette descriptions warmer and more neutral">Warmer palette</button>
+        <button class="chip" data-adjust="Make color palette descriptions cooler">Cooler palette</button>
+        <button class="chip" data-adjust="Use only close-up and medium shots">Tighter framing</button>
+        <button class="chip" data-adjust="Use only wide and medium shots">Wider framing</button>
+        <button class="chip" data-adjust="Add more detail to lighting descriptions">More lighting detail</button>
+      </div>
+
+      <div style="margin-top:16px; margin-bottom:20px">
+        <label for="customAdjust">Or describe a custom adjustment:</label>
+        <div class="refinement-input-row">
+          <input type="text" id="customAdjust" placeholder='e.g. "Generate 2 alternates for line 3 with different angles"' />
+          <button class="btn btn-primary" id="applyAdjustBtn" disabled>Apply</button>
+        </div>
+      </div>
+
+      <div id="refineGeneratingRow" class="loading-row" style="display:none">
+        <div class="spinner"></div>
+        Applying adjustments…
+      </div>
+
+      <div id="refinedPromptsOutput" style="display:none">
+        <div class="copy-all-bar">
+          <span id="refinedCountLabel"></span>
+          <button class="btn btn-secondary btn-sm" id="copyRefinedAllBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+            Copy All
+          </button>
+        </div>
+        <div class="prompts-list" id="refinedPromptsList"></div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn btn-ghost" id="step6Back">← Back to Prompts</button>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="startOverBtn">Start Over</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Toast container ────────────────────────────────── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
