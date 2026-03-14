@@ -86,8 +86,8 @@ $("apiModalCancel").addEventListener("click", () => {
 
 $("apiModalSave").addEventListener("click", () => {
   const val = $("apiKeyInput").value.trim();
-  if (!val.startsWith("sk-")) {
-    toast("Key should start with sk-", "error");
+  if (!val) {
+    toast("Please enter your OpenAI API key", "error");
     return;
   }
   saveApiKey(val);
@@ -217,7 +217,7 @@ async function analyzeVideo() {
 
   const btn = $("analyzeVideoBtn");
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Analysing…';
+  btn.innerHTML = '<div class="spinner"></div> Analyzing…';
 
   try {
     const result = await callVisionAPI(frames, buildVideoAnalysisPrompt());
@@ -233,12 +233,12 @@ async function analyzeVideo() {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
       </svg>
-      Re-analyse Video`;
+      Re-analyze Video`;
   }
 }
 
 function buildVideoAnalysisPrompt() {
-  return `You are a professional cinematography analyst. Analyse these video frames and extract the visual language. 
+  return `You are a professional cinematography analyst. Analyze these video frames and extract the visual language. 
 Return ONLY a JSON object with exactly these keys (no markdown, no extra text):
 {
   "shot_types": "comma-separated list of shot types observed",
@@ -291,7 +291,7 @@ function handleRefImage(input) {
     slotEl.insertBefore(img, slotEl.querySelector(".slot-label"));
     slotEl.querySelector(".slot-label").style.display = "none";
 
-    // Show analyse button if at least one image
+    // Show analyze button if at least one image
     if (state.refImages.some(Boolean)) {
       show($("refAnalyzeRow"));
     }
@@ -330,7 +330,7 @@ async function analyzeReferences() {
 
   const btn = $("analyzeRefBtn");
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Analysing…';
+  btn.innerHTML = '<div class="spinner"></div> Analyzing…';
 
   try {
     const result = await callVisionAPI(images, buildRefAnalysisPrompt());
@@ -346,12 +346,12 @@ async function analyzeReferences() {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
       </svg>
-      Re-analyse References`;
+      Re-analyze References`;
   }
 }
 
 function buildRefAnalysisPrompt() {
-  return `You are a professional visual style analyst. Analyse these reference images and extract style information.
+  return `You are a professional visual style analyst. Analyze these reference images and extract style information.
 Return ONLY a JSON object with exactly these keys (no markdown, no extra text):
 {
   "color_palette": "describe the palette in plain color/tone terms",
